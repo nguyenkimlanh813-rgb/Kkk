@@ -1,0 +1,45 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PlayerController : MonoBehaviour
+{
+    [Header("Cài đặt di chuyển")]
+    public float forwardSpeed = 15f;    // Tốc độ tự động chạy về phía trước
+    public float steerSpeed = 10f;      // Tốc độ rẽ trái/phải
+    
+    [Header("Giới hạn biên đường (Chống xuyên tường)")]
+    public float minX = -4.5f;          // Lề đường bên trái
+    public float maxX = 4.5f;           // Lề đường bên phải
+
+    void Update()
+    {
+        // 1. Xe tự động tiến về phía trước theo trục Z
+        transform.Translate(Vector3.forward * forwardSpeed * Time.deltaTime);
+
+        // 2. Nhận lệnh điều khiển trái/phải từ người chơi (Phím A/D hoặc Mũi tên Trái/Phải)
+        float moveInput = Input.GetAxis("Horizontal");
+        transform.Translate(Vector3.right * moveInput * steerSpeed * Time.deltaTime);
+
+        // 3. Giới hạn vị trí X để người chơi không thể đi xuyên qua tường/vỉa hè hai bên
+        float clampedX = Mathf.Clamp(transform.position.x, minX, maxX);
+        transform.position = new Vector3(clampedX, transform.position.y, transform.position.z);
+    }
+
+    // 4. Xử lý va chạm: Nếu tông trúng xe khác thì làm lại từ đầu
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Kiểm tra xem vật thể va chạm có tag là "Traffic" (Xe chạy trên đường) hay không
+        if (collision.gameObject.CompareTag("Traffic"))
+        {
+            Debug.Log("Đã tông trúng xe! Đang tải lại màn chơi...");
+            RestartGame();
+        }
+    }
+
+    // Hàm tải lại màn chơi hiện tại
+    void RestartGame()
+    {
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        SceneManager.LoadScene(currentSceneIndex);
+    }
+}
